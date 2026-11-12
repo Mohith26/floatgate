@@ -1,0 +1,29 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - uses: actions/checkout@v4
+      - name: unit + power-cut tests under ASan/UBSan
+        run: make test CC=${{ matrix.cc }} EXTRA="${{ matrix.cc == 'gcc' && '-Wno-clobbered' || '' }}"
+      - name: fault-injected firmware must be caught by the checker
+        run: |
+          make mutants CC=${{ matrix.cc }} EXTRA="${{ matrix.cc == 'gcc' && '-Wno-clobbered' || '' }}"
+          for m in 1 2 3; do
+            if ./build/fgverify_mut$m --cuts 300 --seed 21 --ckpt 128 --only program > out.json; then
+              echo "mutant $m was NOT caught"; exit 1; fi
+            echo "mutant $m caught: $(cat out.json)"
+          done
+  cortex-m4:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+      - name: cross-compile firmware for Cortex-M4 (code size only, not run on hardware)
+        run: |
+          make arm ARM_CC=arm-none-eabi-gcc
+          arm-none-eabi-size build/arm_*.o
