@@ -29,7 +29,7 @@ typedef struct {
 
 typedef struct {
     uint64_t reads, oob_reads, programs, erases, violations;
-    uint64_t bits_flipped;
+    uint64_t bits_flipped, program_fails, erase_fails;
     double busy_us; /* modelled array + bus time */
 } nandsim_stats_t;
 

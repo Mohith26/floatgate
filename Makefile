@@ -1,7 +1,7 @@
 CC      ?= cc
 WARN     = -Wall -Wextra -Werror -Wshadow -Wstrict-prototypes
 FWFLAGS  = -std=c99 -ffreestanding $(WARN)
-HOSTFLAGS= -std=c11 -D_POSIX_C_SOURCE=200809L $(WARN)
+HOSTFLAGS= -std=c11 -D_POSIX_C_SOURCE=200809L $(WARN) $(EXTRA)
 OPT     ?= -O2
 SAN     ?= -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all
 

@@ -106,16 +106,18 @@ int main(int argc, char **argv) {
         inflight_lpn = 0xFFFFFFFFu;
         /* an unacknowledged version number must not be reused */
     }
+    uint32_t bad_end = 0;
+    for (uint32_t b = 0; b < nblk; b++) bad_end += r.ftl.bstate[b] == 3; /* BS_BAD */
     printf("{\"cut_ops\": \"%s\", \"cuts\": %u, \"seed\": %" PRIu64 ", \"rber\": %g, \"ckpt_interval\": %d, \"logical_pages\": %u, "
            "\"acked_writes\": %" PRIu64 ", \"acked_data_failures\": %" PRIu64 ", \"lost_acked_writes\": %" PRIu64 ", \"corrupt_reads\": %" PRIu64 ", "
            "\"eio_reads\": %" PRIu64 ", \"mount_failures\": %" PRIu64 ", \"invariant_failures\": %" PRIu64 ", "
            "\"inflight_writes_persisted\": %" PRIu64 ", \"verify_reads\": %" PRIu64 ", "
            "\"cuts_before_op\": %" PRIu64 ", \"cuts_torn_program\": %" PRIu64 ", \"cuts_partial_erase\": %" PRIu64 ", \"cuts_during_read\": %" PRIu64 ", "
            "\"mount_page_reads_mean\": %.1f, \"mount_page_reads_max\": %" PRIu64 ", \"mount_model_ms_mean\": %.2f, "
-           "\"grown_bad_blocks_final\": %" PRIu64 ", \"nand_violations\": %" PRIu64 ", \"nand_programs\": %" PRIu64 ", \"nand_erases\": %" PRIu64 "}\n",
+           "\"bad_blocks_at_end\": %u, \"program_fail_events\": %" PRIu64 ", \"erase_fail_events\": %" PRIu64 ", \"nand_violations\": %" PRIu64 ", \"nand_programs\": %" PRIu64 ", \"nand_erases\": %" PRIu64 "}\n",
            only, a.cuts, a.seed, a.rber, a.ckpt, nlpn, acked_writes, lost + corrupt + eio, lost, corrupt, eio, mount_fail, check_fail, inflight_landed,
            verify_reads, kinds[0], kinds[1], kinds[2], kinds[3], (double)mount_reads_sum / (a.cuts ? a.cuts : 1),
-           mount_reads_max, mount_us_sum / 1000.0 / (a.cuts ? a.cuts : 1), r.ftl.st.grown_bad, r.nand.st.violations,
+           mount_reads_max, mount_us_sum / 1000.0 / (a.cuts ? a.cuts : 1), bad_end, r.nand.st.program_fails, r.nand.st.erase_fails, r.nand.st.violations,
            r.nand.st.programs, r.nand.st.erases);
     free(acked); free(next); free(buf);
     rig_close(&r);

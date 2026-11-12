@@ -120,6 +120,7 @@ static int sim_program(void *ctx, uint32_t blk, uint32_t pg, const uint8_t *data
     double pf = w > 1.0 ? s->cfg.fail_prog_worn : s->cfg.fail_prog_base;
     if (pf > 0 && urand(s) < pf) { /* program FAIL: page left with garbage */
         for (uint32_t i = 0; i < s->cfg.dsz + s->cfg.osz; i++) dst[i] = (uint8_t)nandsim_rand(s);
+        s->st.program_fails++;
         return FG_NAND_FAIL;
     }
     memcpy(dst, data, s->cfg.dsz);
@@ -146,7 +147,7 @@ static int sim_erase(void *ctx, uint32_t blk) {
     }
     double w = (double)s->ec[blk] / (double)s->cfg.endurance;
     double pf = w > 1.0 ? s->cfg.fail_erase_worn : s->cfg.fail_erase_base;
-    if (pf > 0 && urand(s) < pf) return FG_NAND_FAIL;
+    if (pf > 0 && urand(s) < pf) { s->st.erase_fails++; return FG_NAND_FAIL; }
     memset(b0, 0xFF, bytes);
     for (uint32_t p = 0; p < s->cfg.ppb; p++) s->pstate[(size_t)blk * s->cfg.ppb + p] = 0;
     s->next_pg[blk] = 0;

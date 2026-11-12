@@ -168,6 +168,7 @@ def main():
     res["mount"] = {f"ckpt_{ck}": out[("mount", ck)][0] for ck in (0, 4096, 1024)}
     full, ck = res["mount"]["ckpt_0"], res["mount"]["ckpt_4096"]
     res["mount"]["speedup_model_ckpt4096_vs_full_scan"] = round(full["mount_model_ms"] / ck["mount_model_ms"], 1)
+    res["mount"]["speedup_model_ckpt1024_vs_full_scan"] = round(full["mount_model_ms"] / res["mount"]["ckpt_1024"]["mount_model_ms"], 1)
 
     # optional: Cortex-M4 code size (cross-compiled only, never run on hardware)
     try:
