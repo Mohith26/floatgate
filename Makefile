@@ -9,7 +9,7 @@ FW_SRC   = fw/fg_ftl.c fw/fg_bch.c fw/fg_crc32.c
 SIM_SRC  = sim/nandsim.c
 TOOLS    = fgverify fgtrace fgecc fgmount
 
-.PHONY: all test fwcheck arm clean
+.PHONY: all test fwcheck arm mutants results clean
 
 all: $(addprefix build/,$(TOOLS))
 
@@ -30,6 +30,12 @@ build/test_main: tests/test_main.c $(FW_SRC) $(SIM_SRC) fw/*.h sim/*.h tools/rig
 build/fgverify_san: tools/fgverify.c $(FW_SRC) $(SIM_SRC) | build
 	$(CC) $(HOSTFLAGS) $(SAN) tools/fgverify.c $(FW_SRC) $(SIM_SRC) -lm -o $@
 
+# Fault-injection builds: deliberately broken mount logic the checker must catch.
+build/fgverify_mut%: tools/fgverify.c $(FW_SRC) $(SIM_SRC) | build
+	$(CC) $(HOSTFLAGS) $(OPT) -DFG_MUTANT=$* tools/fgverify.c $(FW_SRC) $(SIM_SRC) -lm -o $@
+
+mutants: build/fgverify_mut1 build/fgverify_mut2 build/fgverify_mut3
+
 # Firmware objects must not reference any allocator or stdio symbol.
 fwcheck: $(FW_OBJ)
 	@if nm $(FW_OBJ) | grep -E ' U _?(malloc|calloc|realloc|free|printf|fprintf|puts|abort|exit)$$'; then \
@@ -46,6 +52,9 @@ ARM_CC    ?= clang --target=thumbv7em-none-eabi
 ARM_FLAGS  = -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -Os -ffunction-sections -fdata-sections
 arm: | build
 	for f in $(FW_SRC); do $(ARM_CC) $(ARM_FLAGS) $(FWFLAGS) -c $$f -o build/arm_$$(basename $$f .c).o || exit 1; done
+
+results: all mutants build/test_main
+	python3 scripts/run_all.py
 
 clean:
 	rm -rf build

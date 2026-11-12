@@ -319,7 +319,7 @@ static void static_wl(fg_ftl_t *f) {
         if (f->bstate[b] == BS_FULL && (cold == NONE || f->bec[b] < f->bec[cold])) cold = b;
     }
     if (cold == NONE || maxec - f->bec[cold] <= f->cfg.wl_threshold) return;
-    if (f->nfree < f->cfg.gc_reserve + 2) return;
+    if (make_room(f, f->cfg.gc_reserve + 2) != FG_OK || f->bstate[cold] != BS_FULL) return;
     if (relocate(f, cold, S_WL, &f->st.wl_writes) == FG_OK) {
         free_block(f, cold);
         f->st.wl_runs++;
@@ -508,6 +508,7 @@ static void scan_block(fg_ftl_t *f, uint32_t blk, uint64_t floor, uint64_t *maxs
         f->st.mount_page_reads++;
         f->st.mount_full_reads++;
 #if FG_MUTANT == 2 /* fault-injection build: trust a possibly torn last page */
+        (void)mt;
         if (1)
 #else
         if (read_page(f, blk, pend_pg, f->dbuf, &mt) >= 0 && mt.seq == pend.seq)
